@@ -148,7 +148,9 @@ class NewtonNet(nn.Module):
         self.aggregration = aggregration
 
     def forward(self, data):
-
+        # print(data)
+        
+        # return
         Z = data['Z']
         R = data['R']
         N = data['N']
@@ -241,7 +243,7 @@ class NewtonNet(nn.Module):
 
         else:
             dE = data['F']
-
+        
         if self.return_intermediate:
             return {'E': E, 'F': dE, 'Ei': Ei, 'hs': hs, 'F_latent': f_dir}
         else:

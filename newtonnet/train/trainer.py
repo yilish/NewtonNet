@@ -555,8 +555,10 @@ class Trainer:
 
             for s in step_iterator:
                 self.optimizer.zero_grad()
-
+                
                 train_batch = next(train_generator)
+                # print(train_batch.keys())
+                # exit()
                 # self.model.module(train_batch)
                 # preds = self.model.forward(train_batch)
                 preds = self.model(train_batch)

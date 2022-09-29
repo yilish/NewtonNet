@@ -80,6 +80,10 @@ def batch_dataset_converter(input, device):
         result["E"] = torch.tensor(input['E'],
                                    dtype=torch.float32,
                                    device=device)
+    if "at_E" in input:
+        result["at_E"] = torch.tensor(input['at_E'],
+                                   dtype=torch.float32,
+                                   device=device)
     if "F" in input:
         result["F"] = torch.tensor(input['F'],
                                     dtype=torch.float32,
@@ -298,14 +302,16 @@ def extensive_train_loader(data,
                     N = neighbors
                     NM = neighbor_mask
                     AM = atom_mask
-
+                at_E = data_batch['at_E']
                 batch_dataset = {k:v for k,v in data_batch.items()}
                 batch_dataset.update({'R': rot_atoms,  # B,A,3
                                       'N': N,     # B,A,A-1
                                       'NM': NM,   # B,A,A-1
                                       'AM': AM,   # B,A
-                                      'RM': RM    # B,3  rotation angles only
+                                      'RM': RM,    # B,3  rotation angles only,
+                                      'at_E': at_E
                                       })
+                # print('here!')
                 if 'F' in data:
                     batch_dataset.update({'F': rot_forces})
 
@@ -561,7 +567,7 @@ def extensive_loader_rotwise(
                 NM = None
                 E = data['E'][data_batch_idx]  # B,1
                 # E = np.tile(E, (1, n_rotations + 1)).reshape(E.shape[0] * (n_rotations + 1), E.shape[1])  # B*n_rot,1
-
+                at_E = data['E'][data_batch_idx]  # B,N
                 Z = data['Z'][data_batch_idx]  # B,A
                 Z = np.tile(Z, (1,n_rotations+1)).reshape(Z.shape[0],n_rotations+1,Z.shape[1]) # B,n_rot,A
 
@@ -600,8 +606,10 @@ def extensive_loader_rotwise(
                 'N': N,     # B,A,A-1
                 'NM': NM,   # B,A,A-1
                 'AM': AM,   # B,A
-                'RM': RM
+                'RM': RM,
+                'at_E': at_E
             }
+            # print('Here!')
 
             # batch_dataset = BatchDataset(batch_dataset, device=device)
             batch_dataset = batch_dataset_converter(batch_dataset, device)
