@@ -1,12 +1,12 @@
 general:
   me: config.yml                                # path to this file
-  device: [cuda:0, cuda:1, cuda:2, cuda:3]      # cpu / cuda:0 / list of cuda
+  device: [cuda:1]      # cpu / cuda:0 / list of cuda
   driver: run.py                                # path to the run script
   output: [local/ccsd/test , 1]                 # path and iterator for the output directory
 
 data:
-  train_path: /home/data/MLFF/md17/toluene_ccsd_t-train.npz   # path to the training data
-  test_path: /home/data/MLFF/md17/toluene_ccsd_t-test.npz     # path to the test data
+  train_path: /home/lin/yilishen/NewtonNet/ethanol_uhf_def2tzvpd.db   # path to the training data
+  test_path: False     # path to the test data
   cutoff: 5.0                 # cutoff radius
   train_size: 950             # training set size: to sample randomly
   val_size: 49                # validation set size: to sample randomly
@@ -22,6 +22,7 @@ model:
   wf_decay: 0.0               # rate of exponential decay of force wight by training epoch
   w_f_mag: 0.0                # the weight of force magnitude loss in the loss function
   w_f_dir: 1.0                # the weight of force direction loss in the loss function
+  w_ate: 0.0                  # the weight of atom-wise energy loss in the loss function
   resolution: 20              # number of basis functions that describe interatomic distances
   n_features: 128             # number of features
   max_z: 10                   # maximum atomic number in the chemical systems
