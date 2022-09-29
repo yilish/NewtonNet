@@ -782,8 +782,8 @@ def parse_train_test(settings, device, unit='kcal'):
     
     
     # # meta data
-    # train_path = settings['data']['train_path']
-    train_path = '/home/lin/yilishen/NewtonNet/ethanol_uhf_def2tzvpd.db'
+    train_path = settings['data']['train_path']
+    # train_path = '/home/lin/yilishen/NewtonNet/ethanol_uhf_def2tzvpd.db'
 
     if train_path.split('.')[-1] == 'db':
         save_path = train_path[:-2] + 'npz'
