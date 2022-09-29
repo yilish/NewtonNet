@@ -1,4 +1,6 @@
 import os
+from sqlite3 import connect
+import time
 import numpy as np
 import warnings
 from collections import defaultdict
@@ -7,10 +9,10 @@ from sklearn.utils import random
 from sklearn.utils.random import sample_without_replacement
 from sklearn.model_selection import train_test_split
 
-from combust.utils.utility import standardize_batch
-from combust.utils import DataManager, parse_irc_data
-from combust.data import ExtensiveEnvironment, PeriodicEnvironment
-from combust.data import extensive_train_loader, extensive_loader_rotwise
+from newtonnet.utils.utility import standardize_batch
+# from newtonnet.utils import DataManager, parse_irc_data
+from newtonnet.data import ExtensiveEnvironment, PeriodicEnvironment
+from newtonnet.data import extensive_train_loader, extensive_loader_rotwise
 
 from ase.io import iread
 import math
@@ -709,6 +711,54 @@ def parse_ani_data(settings, device):
 
     return train_gen, val_gen, test_gen, tr_steps, val_steps, test_steps, n_tr_data, n_val_data, n_test_data, normalizer, test_energy_hash
 
+
+def transform_from_db_to_npz(db_path, save_path):
+    if os.path.exists(save_path):
+        print(f'Save path exists in {save_path}')
+        return
+    from ase.db import connect
+    with connect(db_path) as conn:
+        total_atoms = conn.count()
+        # for i in range(1, total_atoms):
+        #     row = conn.get(i)
+        #     atom = row.toatoms()
+    from schnetpack import AtomsData
+    import torch
+    dset = AtomsData(db_path)
+    t = time.time()
+    from tqdm import tqdm
+    mapp = {'_atomic_numbers': 'z', 
+               '_positions': 'R',
+               'forces': 'F',
+               'energy': 'E',
+               'at_energy': 'at_E'}
+    data = dict()
+    data['z'] = dset[0]['_atomic_numbers'].unsqueeze(0)
+    data['R'] = dset[0]['_positions'].unsqueeze(0)
+    data['F'] = dset[0]['forces'].unsqueeze(0)
+    data['E'] = dset[0]['energy'].unsqueeze(0)
+    data['at_E'] = dset[0]['at_energy'].unsqueeze(0)
+    for i in tqdm(range(1, total_atoms)):
+        for key in mapp:
+            data[mapp[key]] = torch.cat([data[mapp[key]],dset[i][key].unsqueeze(0)])
+    np.savez(save_path, 
+             z=data['z'], R=data['R'], F=data['F'], E=data['E'], at_E=data['at_E'])
+    for key in mapp:
+        print(data[mapp[key]].shape)
+    print(f'Time used {time.time() - t}')
+    
+    # t = time.time()
+    # data = dict()
+    # data['Z'] = []
+    # data['E'] = []
+    # for i, item in enumerate(dset):
+    #     # print(item['forces'])
+    #     pass
+    # print(i)
+    # print(time.time() - t)
+    # exit()
+
+
 def parse_train_test(settings, device, unit='kcal'):
     """
     implementation based on train and validation size.
@@ -727,16 +777,26 @@ def parse_train_test(settings, device, unit='kcal'):
     tuple: tuple of mean and standard deviation of energies in the training data
 
     """
-    # meta data
-    train_path = settings['data']['train_path']
+    path = '/home/lin/yilishen/NewtonNet/data/ethanol_uhf_def2tzvpd.npz'
+    # # np.load(path)
+    
+    
+    # # meta data
+    # train_path = settings['data']['train_path']
+    train_path = '/home/lin/yilishen/NewtonNet/ethanol_uhf_def2tzvpd.db'
+
+    if train_path.split('.')[-1] == 'db':
+        save_path = train_path[:-2] + 'npz'
+        transform_from_db_to_npz(train_path, save_path)
+        train_path = save_path
     test_path = settings['data']['test_path']   # can be False
 
     train_size = settings['data']['train_size']
     val_size = settings['data']['val_size']
 
 
-    # read data
-    data = np.load(train_path)
+    # # read data
+    data = np.load(train_path, allow_pickle=True)
     test = None
     if test_path:
         test = dict(np.load(test_path))
@@ -745,6 +805,11 @@ def parse_train_test(settings, device, unit='kcal'):
     dtrain = dict()
     dtest = dict()
 
+    
+    
+        
+        
+        
     for key in list(data.keys()):
         # copy Z embarrassingly Todo: make it data efficient by flexible environment module
         if key == 'z':
@@ -768,12 +833,18 @@ def parse_train_test(settings, device, unit='kcal'):
             dtrain[key] = data[key]
             if test is not None:
                 dtest[key] = test[key]
+        elif key in ['at_E']:
+            dtrain[key] = data[key]
+            if test is not None:
+                dtest[key] = test[key]
+                
 
     # convert unit
     if unit == 'ev':
         dtrain['E'] = dtrain['E'] * 23.061
         dtrain['F'] = dtrain['F'] * 23.061
-
+        dtrain['at_E'] = dtrain['at_E'] * 23.061
+ 
     # split the data
     dtrain, dval, dtest_leftover = split(dtrain,
                                         train_size=train_size,
@@ -990,3 +1061,7 @@ def parse_methane_data(settings, device):
                                      drop_last=False)
 
     return train_gen, val_gen, test_gen, tr_steps, val_steps, test_steps, n_tr_data, n_val_data, n_test_data, normalizer, test_energy_hash
+
+
+if __name__ == "__main__":
+    parse_train_test(None, 0)
