@@ -65,8 +65,10 @@ w_energy = settings['model']['w_energy']
 w_force = settings['model']['w_force']
 w_f_mag = settings['model']['w_f_mag']
 w_f_dir = settings['model']['w_f_dir']
+w_ate = settings['model']['w_ate']
 
-def custom_loss(preds, batch_data, w_e=w_energy, w_f=w_force, w_fm=w_f_mag, w_fd=w_f_dir):
+
+def custom_loss(preds, batch_data, w_e=w_energy, w_f=w_force, w_fm=w_f_mag, w_fd=w_f_dir, w_ate=w_ate):
 
     # compute the mean squared error on the energies
     diff_energy = preds['E'] - batch_data["E"]
@@ -85,12 +87,18 @@ def custom_loss(preds, batch_data, w_e=w_energy, w_f=w_force, w_fm=w_f_mag, w_fd
         err_sq_mag_forces = torch.mean(diff_forces ** 2)
         err_sq = err_sq + w_fm * err_sq_mag_forces
 
+    # compute the mse on atom energies
+    if w_ate > 0:
+        diff_at_energy = preds['Ei'].squeeze(-1) - batch_data['at_E']
+        err_at_energy = torch.mean(diff_at_energy**2)
+        err_sq = err_sq + w_ate * err_at_energy
+
     if w_fd > 0:
         cos = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
         direction_diff = 1 - cos(preds['hs'][-1][1], batch_data["F"])
         # direction_diff = direction_diff * torch.norm(batch_data["F"], p=2, dim=-1)
         direction_loss = torch.mean(direction_diff)
-        err_sq = err_sq + w_fd * direction_loss
+        err_sq = err_sq + w_fd * direction_loss# + w_ate * err_at
 
     if settings['checkpoint']['verbose']:
         print('\n',
