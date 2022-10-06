@@ -14,6 +14,7 @@ from ase.neighborlist import neighbor_list
 
 from newtonnet.utils.utility import padaxis
 
+
 class ExtensiveEnvironment(object):
     """
     Provide atomic environment of an array of atoms and their atomic numbers.
