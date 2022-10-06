@@ -22,6 +22,10 @@ model:
   wf_decay: 0.0               # rate of exponential decay of force wight by training epoch
   w_f_mag: 0.0                # the weight of force magnitude loss in the loss function
   w_f_dir: 1.0                # the weight of force direction loss in the loss function
+<<<<<<< Updated upstream
+=======
+  w_ate: 1.0                  # the weight of atom-wise energy loss in the loss function
+>>>>>>> Stashed changes
   resolution: 20              # number of basis functions that describe interatomic distances
   n_features: 128             # number of features
   max_z: 10                   # maximum atomic number in the chemical systems
