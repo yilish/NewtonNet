@@ -373,16 +373,17 @@ class Trainer:
                 E = val_batch["E"]
             val_error_ei.append(
                 self.metric_ae(
-                    val_preds['Ei'].detach().cpu().numpy(), E.detach().cpu().numpy(),
+                    val_preds['Ei'].detach().cpu().numpy(), val_batch['at_E'].detach().cpu().numpy(),
                 divider=val_batch['NA'].detach().cpu().numpy() if 'NA' in val_batch else None
                 )
             )
             val_error_energy.append(self.metric_ae(
-                val_preds['E'].detach().cpu().numpy(), val_batch['at_E'].detach().cpu().numpy(),
+                val_preds['E'].detach().cpu().numpy(), E.detach().cpu().numpy(),
                 divider=val_batch['NA'].detach().cpu().numpy() if 'NA' in val_batch else None))
             energy_pred.append(val_preds['E'].detach().cpu().numpy())
             e.append(E.detach().cpu().numpy())
             ei_true.append(val_batch['at_E'].detach().cpu().numpy())
+            
             ei.append(val_preds['Ei'].detach().cpu().numpy())
             if self.mode == 'energy/force':
                 if self.force_latent:
@@ -424,6 +425,7 @@ class Trainer:
         outputs['E_pred'] = np.concatenate(energy_pred,axis=0)
         outputs['E'] = np.concatenate(e, axis=0)
         outputs['Ei'] = standardize_batch(list(chain(*ei)))
+        # print(outputs['Ei'])
         outputs['Ei_true'] = standardize_batch(list(chain(*ei_true)))
         if len(fi) > 0: 
             outputs['dEi'] = standardize_batch(list(chain(*fi)))
@@ -674,6 +676,7 @@ class Trainer:
             # best model
             irc_mae_E = 0; irc_mae_F = 0
             test_mae_E = 0; test_mae_F = 0
+            test_mae_ei = 0; 
             test_error = 0
             if self.best_val_loss > val_error:
                 self.best_val_loss = val_error
