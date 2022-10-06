@@ -51,6 +51,7 @@ class NewtonNet(nn.Module):
                  cutoff=5.0,
                  cutoff_network='poly',
                  normalizer=(0.0, 1.0),
+                #  atomic_normalizer=(0.0, 1.0),
                  normalize_atomic=False,
                  requires_dr=False,
                  device=None,
@@ -143,12 +144,32 @@ class NewtonNet(nn.Module):
                                       device=device),
                     stddev=torch.tensor(normalizer[1],
                                         device=device))
-
+            # if type(atomic_normalizer) is dict:
+            atomic_normalizer = {
+                6: (-23764.74, 26.48603),
+                8: (-47097.69, 3.3851836), 
+                1: (-347.26465, 19.691753)
+            }
+            self.atomic_inverse_normalize = nn.ModuleDict(
+                {str(atom_num): ScaleShift(
+                    mean=torch.tensor(atomic_normalizer[atom_num][0],
+                                        device=device),
+                    stddev=torch.tensor(atomic_normalizer[atom_num][1],
+                                        device=device)) for atom_num in atomic_normalizer})
+            # else:
+            #     self.atomic_inverse_normalize = ScaleShift(
+            #         mean=torch.tensor(atomic_normalizer[0],
+            #                           device=device),
+            #         stddev=torch.tensor(atomic_normalizer[1],
+            #                             device=device))
+       
         self.atomic_properties_only = atomic_properties_only
         self.aggregration = aggregration
 
     def forward(self, data):
-
+        # print(data)
+        
+        # return
         Z = data['Z']
         R = data['R']
         N = data['N']
@@ -214,9 +235,9 @@ class NewtonNet(nn.Module):
 
         # output net
         Ei = self.atomic_energy(a)
+        # Ei = self.atomic_inverse_normalize(Ei)
         if self.normalize_atomic:
             Ei = self.inverse_normalize(Ei, Z)
-
         # inverse normalize
         Ei = Ei * AM[..., None]  # (B,A,1)
         if self.aggregration == 'sum':
@@ -227,7 +248,9 @@ class NewtonNet(nn.Module):
             E = torch.max(Ei, 1).values
         if not self.normalize_atomic:
             E = self.inverse_normalize(E)
-
+        Ei[Z == 1] = self.atomic_inverse_normalize['1'](Ei[Z == 1])
+        Ei[Z == 6] = self.atomic_inverse_normalize['6'](Ei[Z == 6])
+        Ei[Z == 8] = self.atomic_inverse_normalize['8'](Ei[Z == 8])
         if self.requires_dr:
 
             dE = grad(
@@ -241,7 +264,7 @@ class NewtonNet(nn.Module):
 
         else:
             dE = data['F']
-
+        
         if self.return_intermediate:
             return {'E': E, 'F': dE, 'Ei': Ei, 'hs': hs, 'F_latent': f_dir}
         else:
