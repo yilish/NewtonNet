@@ -23,6 +23,7 @@ else:
 
 # data
 train_gen, val_gen, test_gen, tr_steps, val_steps, test_steps, normalizer = parse_train_test(settings,device[0])
+
 print('normalizer: ', normalizer)
 
 # model
