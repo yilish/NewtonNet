@@ -371,6 +371,8 @@ class Trainer:
                 E = val_batch["E"].unsqueeze(1).repeat(1,val_batch["Z"].shape[1],1)
             else:
                 E = val_batch["E"]
+            val_preds['Ei'] = val_preds['Ei'].squeeze(-1)#.shape, val_batch['at_E'].shape)
+            # exit()
             val_error_ei.append(
                 self.metric_ae(
                     val_preds['Ei'].detach().cpu().numpy(), val_batch['at_E'].detach().cpu().numpy(),

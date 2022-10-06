@@ -248,9 +248,13 @@ class NewtonNet(nn.Module):
             E = torch.max(Ei, 1).values
         if not self.normalize_atomic:
             E = self.inverse_normalize(E)
+            
+        # print(Ei)
         Ei[Z == 1] = self.atomic_inverse_normalize['1'](Ei[Z == 1])
         Ei[Z == 6] = self.atomic_inverse_normalize['6'](Ei[Z == 6])
         Ei[Z == 8] = self.atomic_inverse_normalize['8'](Ei[Z == 8])
+        # print(Ei)
+        # exit()
         if self.requires_dr:
 
             dE = grad(

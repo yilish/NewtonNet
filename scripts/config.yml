@@ -1,6 +1,6 @@
 general:
   me: config.yml                                # path to this file
-  device: [cuda:1]      # cpu / cuda:0 / list of cuda
+  device: [cuda:0]      # cpu / cuda:0 / list of cuda
   driver: run.py                                # path to the run script
   output: [local/ccsd/test , 1]                 # path and iterator for the output directory
 
@@ -17,7 +17,7 @@ model:
   pre_trained: False          # path to the previously trained model for warm-up start
   activation: swish           # activation function: swish, ssp, relu, ...
   requires_dr: True           # if derivative of the output is required
-  w_energy: 1.0               # the weight of energy loss in the loss function
+  w_energy: 0.0               # the weight of energy loss in the loss function
   w_force: 100.0              # the weight of force loss in the loss function
   wf_decay: 0.0               # rate of exponential decay of force wight by training epoch
   w_f_mag: 0.0                # the weight of force magnitude loss in the loss function
